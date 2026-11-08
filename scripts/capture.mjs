@@ -19,6 +19,15 @@ await mkdir(directory, { recursive: true });
 async function capture(name) {
   await page.evaluate(() => document.fonts.ready);
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  if (page.viewportSize().width > 640 && (await page.locator('.account').count())) {
+    const bottomGap = await page.evaluate(() => {
+      const sidebar = document.querySelector('.sidebar').getBoundingClientRect();
+      const account = document.querySelector('.account').getBoundingClientRect();
+      return sidebar.bottom - account.bottom;
+    });
+    if (Math.abs(bottomGap - 20) > 1)
+      throw new Error(`Account controls must sit at the sidebar bottom: ${name} (${bottomGap}px).`);
+  }
   await page.screenshot({
     path: fileURLToPath(new URL(name, directory)),
     fullPage: true,

@@ -12,7 +12,7 @@ Report statistics sit on the page background, separated by rules. Reading rows a
 
 ## Composition and states
 
-Desktop uses a 224px white sidebar. The sidebar spans the page height and its navigation stays visible while scrolling. The journal contains date and period controls, a report summary, daily rows, and a chart of recorded readings. Mobile uses top navigation and two-column statistics. Forms open inline with the selected date. Delete confirmation appears beside the affected reading. Errors, loading, empty reports, session expiry, and successful changes have text feedback.
+Desktop uses a 224px white sidebar. The sidebar spans the page height, with account details and logout at its bottom. The journal contains date and period controls, a report summary, daily rows, and a chart of recorded readings. Mobile uses top navigation and two-column statistics. Forms open inline with the selected date. Delete confirmation appears beside the affected reading. Errors, loading, empty reports, session expiry, and successful changes have text feedback.
 
 Patients also have paginated history and daily check-in views. Doctor navigation leads to assigned-patient reports with a patient selector. Monthly charts plot each recorded value in meal-slot order. Mobile navigation uses two columns to keep all patient destinations visible.
 
