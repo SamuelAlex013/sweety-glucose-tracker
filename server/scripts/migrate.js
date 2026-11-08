@@ -8,8 +8,12 @@ export async function migrate(pool) {
   try {
     await client.query('BEGIN');
     await client.query("SELECT pg_advisory_xact_lock(hashtext('sweety:migrations'))");
-    await client.query('CREATE TABLE IF NOT EXISTS schema_migrations (version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())');
-    const applied = await client.query('SELECT 1 FROM schema_migrations WHERE version = $1', ['001']);
+    await client.query(
+      'CREATE TABLE IF NOT EXISTS schema_migrations (version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())',
+    );
+    const applied = await client.query('SELECT 1 FROM schema_migrations WHERE version = $1', [
+      '001',
+    ]);
     if (!applied.rowCount) {
       await client.query(sql);
       await client.query('INSERT INTO schema_migrations(version) VALUES ($1)', ['001']);

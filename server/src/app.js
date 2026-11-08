@@ -21,9 +21,12 @@ export function createApp(pool, options = {}) {
   app.use('/api', (req, res, next) => {
     res.set('Cache-Control', 'no-store');
     if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
-      if (req.get('Origin') && req.get('Origin') !== settings.origin) throw new ApiError(403, 'This request origin is not allowed.');
-      if (req.get('Sec-Fetch-Site') === 'cross-site') throw new ApiError(403, 'Cross-site requests are not allowed.');
-      if (req.method !== 'DELETE' && !req.is('application/json')) throw new ApiError(415, 'Send this request as application/json.');
+      if (req.get('Origin') && req.get('Origin') !== settings.origin)
+        throw new ApiError(403, 'This request origin is not allowed.');
+      if (req.get('Sec-Fetch-Site') === 'cross-site')
+        throw new ApiError(403, 'Cross-site requests are not allowed.');
+      if (req.method !== 'DELETE' && !req.is('application/json'))
+        throw new ApiError(415, 'Send this request as application/json.');
     }
     next();
   });
@@ -31,7 +34,9 @@ export function createApp(pool, options = {}) {
     await pool.query('SELECT 1');
     res.json({ status: 'ok' });
   });
-  app.get('/api/config', (req, res) => res.json({ today: getToday(), timeZone: settings.timeZone }));
+  app.get('/api/config', (req, res) =>
+    res.json({ today: getToday(), timeZone: settings.timeZone }),
+  );
   app.use('/api/auth', authRouter(pool, settings));
   app.use('/api/readings', authMiddleware(pool), readingsRouter(pool, getToday));
   app.use('/api/reports', authMiddleware(pool), reportsRouter(pool, getToday));

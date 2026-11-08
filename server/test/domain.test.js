@@ -4,13 +4,26 @@ import { validateReading, reportRanges, todayIn } from '../../shared/domain.js';
 
 const valid = { date: '2026-10-15', slot: 'lunch', value: 110 };
 test('whole-number glucose validation rejects blanks, coercion, decimals, and out-of-range values', () => {
-  for (const value of ['', null, undefined]) assert.equal(validateReading({ ...valid, value }, '2026-10-15').value, 'Please enter a glucose value.');
-  for (const value of [39, 601, 100.5, '100.5', '1e2', true, [], {}, ' ', '-40']) assert.ok(validateReading({ ...valid, value }, '2026-10-15').value, `Rejected ${JSON.stringify(value)}`);
-  for (const value of [40, 600, '110']) assert.deepEqual(validateReading({ ...valid, value }, '2026-10-15'), {});
+  for (const value of ['', null, undefined])
+    assert.equal(
+      validateReading({ ...valid, value }, '2026-10-15').value,
+      'Please enter a glucose value.',
+    );
+  for (const value of [39, 601, 100.5, '100.5', '1e2', true, [], {}, ' ', '-40'])
+    assert.ok(
+      validateReading({ ...valid, value }, '2026-10-15').value,
+      `Rejected ${JSON.stringify(value)}`,
+    );
+  for (const value of [40, 600, '110'])
+    assert.deepEqual(validateReading({ ...valid, value }, '2026-10-15'), {});
 });
 test('dates must be real, nonfuture calendar dates, with a known slot', () => {
-  for (const date of ['2026-02-29', '2026-04-31', '15/10/2026', '', '1899-12-31', ['2026-10-15']]) assert.ok(validateReading({ ...valid, date }, '2026-10-15').date);
-  assert.equal(validateReading({ ...valid, date: '2026-10-16' }, '2026-10-15').date, 'Date cannot be in the future.');
+  for (const date of ['2026-02-29', '2026-04-31', '15/10/2026', '', '1899-12-31', ['2026-10-15']])
+    assert.ok(validateReading({ ...valid, date }, '2026-10-15').date);
+  assert.equal(
+    validateReading({ ...valid, date: '2026-10-16' }, '2026-10-15').date,
+    'Date cannot be in the future.',
+  );
   assert.ok(validateReading({ ...valid, slot: 'snack' }, '2026-10-15').slot);
 });
 test('report ranges match the brief and handle January and leap-year boundaries', () => {

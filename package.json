@@ -3,8 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "workspaces": ["server", "client"],
-  "engines": { "node": ">=22" },
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
   "scripts": {
     "dev": "concurrently -n api,web -c blue,green \"npm run dev -w server\" \"npm run dev -w client\"",
     "build": "npm run build -w client",
@@ -13,10 +18,14 @@
     "db:seed": "npm run db:seed -w server",
     "test": "npm run test -w server && npm run test -w client",
     "test:integration": "npm run test:integration -w server",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "screenshots": "node scripts/capture.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "prettier": "^3.6.2"
   }
 }
