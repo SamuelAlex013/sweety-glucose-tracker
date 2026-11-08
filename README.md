@@ -9,7 +9,7 @@ A personal blood glucose journal built with React, Express, and PostgreSQL. Reco
 Requires Node.js 22.12 or later, npm, and PostgreSQL 17 (or Docker Desktop for the database).
 
 ```sh
-git clone https://github.com/Samuelalex385/sweety-glucose-tracker.git
+git clone https://github.com/SamuelAlex013/sweety-glucose-tracker.git
 cd sweety-glucose-tracker
 npm ci
 cp .env.example .env
