@@ -6,7 +6,6 @@ import {
   CalendarDays,
   ChartNoAxesCombined,
   Check,
-  ChevronRight,
   LogOut,
   Plus,
   RotateCcw,
@@ -99,42 +98,42 @@ function Dashboard({ user, settings, onLogout }) {
         Skip to journal
       </a>
       <aside className="sidebar">
-        <a className="brand-link" href="#main" aria-label="Sweety journal">
-          <Brand />
-        </a>
-        <nav aria-label="Main navigation">
-          <button
-            className={type === 'daily' ? 'nav-item active' : 'nav-item'}
-            onClick={() => {
-              setType('daily');
-              setEditor(null);
-            }}
-          >
-            <BookOpen size={19} />
-            My journal
-            <ChevronRight size={16} />
-          </button>
-          <button
-            className={type !== 'daily' ? 'nav-item active' : 'nav-item'}
-            onClick={() => {
-              setType('mtd');
-              setEditor(null);
-            }}
-          >
-            <ChartNoAxesCombined size={19} />
-            Reports
-            <ChevronRight size={16} />
-          </button>
-        </nav>
-        <div className="account">
-          <span className="avatar">{user.name.slice(0, 1).toUpperCase()}</span>
-          <div>
-            <strong>{user.name}</strong>
-            <span>Personal account</span>
+        <div className="sidebar-content">
+          <a className="brand-link" href="#main" aria-label="Sweety journal">
+            <Brand />
+          </a>
+          <nav aria-label="Main navigation">
+            <button
+              className={type === 'daily' ? 'nav-item active' : 'nav-item'}
+              onClick={() => {
+                setType('daily');
+                setEditor(null);
+              }}
+            >
+              <BookOpen size={19} />
+              My journal
+            </button>
+            <button
+              className={type !== 'daily' ? 'nav-item active' : 'nav-item'}
+              onClick={() => {
+                setType('mtd');
+                setEditor(null);
+              }}
+            >
+              <ChartNoAxesCombined size={19} />
+              Reports
+            </button>
+          </nav>
+          <div className="account">
+            <span className="avatar">{user.name.slice(0, 1).toUpperCase()}</span>
+            <div>
+              <strong>{user.name}</strong>
+              <span>Personal account</span>
+            </div>
+            <button className="icon-button" aria-label="Log out" onClick={logout}>
+              <LogOut size={18} />
+            </button>
           </div>
-          <button className="icon-button" aria-label="Log out" onClick={logout}>
-            <LogOut size={18} />
-          </button>
         </div>
       </aside>
       <div className="workspace">

@@ -25,6 +25,12 @@ try {
   await page.getByRole('button', { name: 'Log in', exact: true }).click();
   await page.getByRole('heading', { name: 'Daily readings' }).waitFor();
   await page.evaluate(() => document.fonts.ready);
+  const continuousRail = await page.evaluate(() => {
+    const rail = document.querySelector('.sidebar').getBoundingClientRect();
+    const shell = document.querySelector('.app-shell').getBoundingClientRect();
+    return Math.abs(rail.height - shell.height) <= 1;
+  });
+  if (!continuousRail) throw new Error('The desktop navigation rail does not span the page.');
   await capture('daily-desktop.png');
   await page.getByRole('button', { name: 'Month to date', exact: true }).click();
   await page.getByRole('heading', { name: 'Readings in this report' }).waitFor();

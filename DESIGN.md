@@ -6,11 +6,13 @@ A personal daily journal, using the orderly rows and clear period controls of Lo
 
 ## Palette and type
 
-Blue ink `#193f51`, body ink `#203e4b`, slate `#60747e`, pale blue `#e8f1f4`, white `#ffffff`, quiet green `#3b7162` for a saved state. A light main surface supports quick daytime checks; the dark navigation anchors the journal. Manrope headings and numbers, Nunito Sans body text; fonts are self-hosted via npm.
+Charcoal `#282b26` for text, neutral gray `#62665d` for secondary text, white `#ffffff` for navigation and reading rows, and near-white `#f7f7f5` for the canvas. Forest green `#315b3d` identifies actions and selection; `#527346` draws the single chart series. Red remains reserved for errors and deletion. Green does not classify glucose values as healthy or unhealthy. Manrope headings and numbers, Nunito Sans body text; fonts are self-hosted via npm.
+
+The palette is deliberately restrained. Reports sit directly on the neutral canvas, separated by rules, rather than large colored statistic cards. The reading log is the primary enclosed surface. Role-based CSS tokens own colors across authentication, navigation, reports, and forms.
 
 ## Composition and states
 
-Desktop: compact left navigation, date and period controls, report summary, daily rows, and a true-data trend. Mobile: top navigation, two-column statistics, and the same four rows. Forms are inline and keep the selected date. Delete confirmation appears next to the affected reading. Errors, loading, empty reports, session expiry, and successful changes have explicit text.
+Desktop: a 224px white navigation rail, date and period controls, report summary, daily rows, and a true-data trend. The outer rail stretches with the entire page; its inner navigation stays sticky within the viewport. This keeps the rail continuous in full-page screenshots while leaving the account controls accessible during scrolling. Brand placement aligns with the top bar. Mobile: top navigation, two-column statistics, and the same four rows. Forms are inline and keep the selected date. Delete confirmation appears next to the affected reading. Errors, loading, empty reports, session expiry, and successful changes have explicit text.
 
 ## Reference
 

@@ -13,9 +13,6 @@ export default function Report({ report, type }) {
             {report.start !== report.end && ` – ${formatDate(report.end, { year: 'numeric' })}`}
           </p>
         </div>
-        <span className="report-symbol">
-          <Activity size={20} />
-        </span>
       </div>
       {report.count ? (
         <dl className="stats">
