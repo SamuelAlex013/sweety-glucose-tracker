@@ -226,3 +226,75 @@ test('losing an idle database connection does not crash the API process', async 
     timeout: 10000,
   });
 });
+
+test('reading pagination returns stable pages, totals, filters, and clear parameter errors', async () => {
+  const { agent } = await account();
+  for (let index = 0; index < 23; index++) {
+    await agent
+      .post('/api/readings')
+      .send(
+        reading(
+          `2026-10-0${Math.floor(index / 4) + 1}`,
+          ['morning', 'breakfast', 'lunch', 'dinner'][index % 4],
+          100 + index,
+        ),
+      )
+      .expect(201);
+  }
+  const first = (await agent.get('/api/readings?page=1&limit=20').expect(200)).body;
+  const second = (await agent.get('/api/readings?page=2&limit=20').expect(200)).body;
+  assert.deepEqual(first.pagination, { page: 1, limit: 20, total: 23, totalPages: 2 });
+  assert.equal(first.readings.length, 20);
+  assert.equal(second.readings.length, 3);
+  assert.equal(new Set([...first.readings, ...second.readings].map((row) => row.id)).size, 23);
+  assert.deepEqual((await agent.get('/api/readings?page=99&limit=20')).body.readings, []);
+  assert.equal((await agent.get('/api/readings?date=2026-10-01&limit=2')).body.pagination.total, 4);
+  for (const query of ['page=0', 'page=-1', 'page=1.2', 'limit=101', 'limit=0', 'page=1&page=2'])
+    await agent.get(`/api/readings?${query}`).expect(400);
+});
+
+test('doctor reports require a patient assignment and preserve patient ownership', async () => {
+  const patient = await account();
+  const other = await account();
+  const doctor = await account();
+  await pool.query("UPDATE users SET role='doctor' WHERE id=$1", [doctor.user.id]);
+  await pool.query('INSERT INTO doctor_patients(doctor_id,patient_id) VALUES ($1,$2)', [
+    doctor.user.id,
+    patient.user.id,
+  ]);
+  const created = await patient.agent.post('/api/readings').send(reading()).expect(201);
+  const patients = (await doctor.agent.get('/api/patients').expect(200)).body.patients;
+  assert.deepEqual(
+    patients.map((row) => row.id),
+    [patient.user.id],
+  );
+  assert.equal(
+    (
+      await doctor.agent
+        .get(`/api/reports?date=2026-10-15&patientId=${patient.user.id}`)
+        .expect(200)
+    ).body.reports.daily.count,
+    1,
+  );
+  await doctor.agent.get(`/api/reports?patientId=${other.user.id}`).expect(403);
+  await patient.agent.get(`/api/reports?patientId=${other.user.id}`).expect(403);
+  await patient.agent.get('/api/patients').expect(403);
+  await doctor.agent.post('/api/readings').send(reading()).expect(403);
+  await doctor.agent.put(`/api/readings/${created.body.reading.id}`).send(reading()).expect(403);
+  await doctor.agent.delete(`/api/readings/${created.body.reading.id}`).expect(403);
+  await pool.query('DELETE FROM doctor_patients WHERE doctor_id=$1', [doctor.user.id]);
+  await doctor.agent.get(`/api/reports?patientId=${patient.user.id}`).expect(403);
+});
+
+test('public registration creates a patient even when a role is supplied', async () => {
+  const result = await request(app)
+    .post('/api/auth/register')
+    .send({
+      name: 'Patient',
+      email: `${randomUUID()}@example.com`,
+      password: 'test-password-42',
+      role: 'doctor',
+    })
+    .expect(201);
+  assert.equal(result.body.user.role, 'patient');
+});

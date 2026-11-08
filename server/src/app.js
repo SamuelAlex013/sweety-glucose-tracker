@@ -8,10 +8,14 @@ import { authRouter, authMiddleware } from './auth.js';
 import { readingsRouter } from './readings.js';
 import { reportsRouter } from './reports.js';
 import { ApiError, errorHandler } from './errors.js';
+import { noCache } from './cache.js';
+import { patientsRouter, requirePatient } from './patients.js';
+import { remindersRouter } from './reminders.js';
 
 export function createApp(pool, options = {}) {
   const settings = { ...config, ...options };
   const getToday = options.getToday || (() => todayIn(settings.timeZone));
+  const cache = options.cache || noCache;
   const app = express();
   app.disable('x-powered-by');
   if (settings.trustProxy) app.set('trust proxy', 1);
@@ -32,14 +36,22 @@ export function createApp(pool, options = {}) {
   });
   app.get('/api/health', async (req, res) => {
     await pool.query('SELECT 1');
+    if (cache.enabled) await cache.ping();
     res.json({ status: 'ok' });
   });
   app.get('/api/config', (req, res) =>
     res.json({ today: getToday(), timeZone: settings.timeZone }),
   );
   app.use('/api/auth', authRouter(pool, settings));
-  app.use('/api/readings', authMiddleware(pool), readingsRouter(pool, getToday));
-  app.use('/api/reports', authMiddleware(pool), reportsRouter(pool, getToday));
+  app.use(
+    '/api/readings',
+    authMiddleware(pool),
+    requirePatient,
+    readingsRouter(pool, getToday, cache),
+  );
+  app.use('/api/reports', authMiddleware(pool), reportsRouter(pool, getToday, cache));
+  app.use('/api/patients', authMiddleware(pool), patientsRouter(pool));
+  app.use('/api/reminders', authMiddleware(pool), remindersRouter(pool));
   app.use('/api', (req, res) => res.status(404).json({ message: 'API route not found.' }));
   if (settings.production) {
     const dist = fileURLToPath(new URL('../../client/dist/', import.meta.url));

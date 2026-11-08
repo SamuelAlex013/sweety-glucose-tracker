@@ -16,7 +16,7 @@ export function authMiddleware(pool) {
     if (typeof token !== 'string' || !/^[a-f0-9]{64}$/.test(token))
       throw new ApiError(401, 'Please log in to continue.');
     const result = await pool.query(
-      'SELECT u.id, u.name, u.email FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = $1 AND s.expires_at > now()',
+      'SELECT u.id, u.name, u.email, u.role FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = $1 AND s.expires_at > now()',
       [hashToken(token)],
     );
     if (!result.rowCount) throw new ApiError(401, 'Your session has expired. Please log in again.');
@@ -25,7 +25,8 @@ export function authMiddleware(pool) {
   };
 }
 
-export function authRouter(pool, { production }) {
+export function authRouter(pool, { production, secureCookies }) {
+  const secure = secureCookies === undefined ? production : secureCookies === 'true';
   const router = Router();
   const requireAuth = authMiddleware(pool);
   const limiter = rateLimit({
@@ -46,8 +47,8 @@ export function authRouter(pool, { production }) {
       user.id,
       new Date(Date.now() + SESSION_MS),
     ]);
-    res.cookie(COOKIE, token, { ...cookieOptions(production), maxAge: SESSION_MS });
-    return { id: user.id, name: user.name, email: user.email };
+    res.cookie(COOKIE, token, { ...cookieOptions(secure), maxAge: SESSION_MS });
+    return { id: user.id, name: user.name, email: user.email, role: user.role || 'patient' };
   }
 
   router.post('/register', limiter, async (req, res) => {
@@ -102,7 +103,7 @@ export function authRouter(pool, { production }) {
     const token = req.cookies[COOKIE];
     if (typeof token === 'string')
       await pool.query('DELETE FROM sessions WHERE token_hash = $1', [hashToken(token)]);
-    res.clearCookie(COOKIE, cookieOptions(production));
+    res.clearCookie(COOKIE, cookieOptions(secure));
     res.status(204).end();
   });
   return router;
