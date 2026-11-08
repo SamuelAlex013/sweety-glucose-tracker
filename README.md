@@ -23,7 +23,7 @@ On PowerShell, use `Copy-Item .env.example .env` instead of `cp` if needed. Star
 
 Open **[http://localhost:5173](http://localhost:5173)**. Use this exact origin, matching `APP_ORIGIN` in `.env`. The API runs on port 3001; Vite proxies `/api` requests to it.
 
-Demo login: **demo@sweety.local** / **SweetyDemo2026!**. All seeded data is synthetic. The seed fills the previous month and current month through today, leaving two slots open today. Running it again preserves existing readings and passwords. It is intended for a fresh demo account, not for adding data to a real patient's journal.
+Demo account: **Samuel Alexander**. Login: **demo@sweety.local** / **SweetyDemo2026!**. All seeded data is synthetic. The seed fills the previous month and current month through today, leaving two slots open today. Running it again updates the demo name and preserves existing readings and passwords. It is intended for a fresh demo account, not for adding data to a real patient's journal.
 
 ### Existing PostgreSQL instead of Docker
 
@@ -144,3 +144,20 @@ All screenshots show synthetic demo data. To reproduce them, seed the demo accou
 - With more time: password recovery/email verification, per-user timezone preferences, paginated historical records, accessibility testing with assistive technology, backup/restore procedures, and a shared rate-limit store for multiple API instances.
 
 The Compose definition is included for reproducible setup. Local verification used PostgreSQL 17 installed on Windows because Docker Desktop was not running.
+
+## Requirement verification
+
+Reviewed against the assignment on 8 November 2026. The automated suites contain 17 tests; their assertions cover multiple cases per test.
+
+| Required area                                 | Verification                                                                                                                                                                              |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Registration, login, bcrypt, private readings | PostgreSQL API tests check password hashing, authentication, session expiry, and isolation between accounts.                                                                              |
+| Add, view, edit, delete                       | Browser workflow covers the full lifecycle; API tests verify persisted changes and ownership restrictions.                                                                                |
+| All five reading validation rules             | Browser assertions check required values, range/whole numbers, duplicate slots, the four-reading limit, and future dates. API and database checks also cover concurrency and constraints. |
+| Daily, month-to-date, previous-month reports  | API assertions check counts, min/max, rounded averages, inclusive boundaries, selected-date cutoffs, and empty results. Calendar tests cover January and leap years.                      |
+| Daily slots and empty-state UI                | Browser tests verify recorded slots and friendly empty reports.                                                                                                                           |
+| Submission materials                          | Public repository with incremental commits, setup/test instructions, `.env.example`, demo seed, screenshots, and Notes are present.                                                       |
+
+The demo account and screenshots use **Samuel Alexander**, with synthetic readings. The quality review removed generic promotional copy, unused slot metadata and CSS, and duplicated frontend slot definitions. Validation and calendar rules are shared by the API and form. The deterministic design scan reported no findings; that is a limited pattern check, not proof of design quality or full accessibility compliance.
+
+Optional chart and frontend tests are implemented. Compose configuration validates, but starting the Docker service was not tested locally; the database behavior was tested against native PostgreSQL 17. The app has not been deployed to a public web host.

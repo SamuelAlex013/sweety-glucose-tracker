@@ -12,6 +12,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { api } from './api.js';
+import { SLOTS } from '../../shared/domain.js';
 import { formatDate, shiftDate } from './format.js';
 import Brand from './components/Brand.jsx';
 import AuthPage from './components/AuthPage.jsx';
@@ -31,6 +32,7 @@ function Dashboard({ user, settings, onLogout }) {
   const [editor, setEditor] = useState(null);
   const [revision, setRevision] = useState(0);
   const editorRef = useRef(null);
+  const dailyReadings = reports?.daily.readings || [];
   const sessionExpired = useCallback(
     () => onLogout('Your session has expired. Please log in again.'),
     [onLogout],
@@ -124,14 +126,6 @@ function Dashboard({ user, settings, onLogout }) {
             <ChevronRight size={16} />
           </button>
         </nav>
-        <div className="sidebar-note">
-          <span className="note-line" />
-          <p>
-            Small moments.
-            <br />A daily picture.
-          </p>
-          <span>Your readings, in your own time.</span>
-        </div>
         <div className="account">
           <span className="avatar">{user.name.slice(0, 1).toUpperCase()}</span>
           <div>
@@ -155,14 +149,12 @@ function Dashboard({ user, settings, onLogout }) {
           <div className="page-heading">
             <div>
               <h1>
-                {type === 'daily'
-                  ? `A little check-in, ${user.name.split(' ')[0]}.`
-                  : 'See the bigger picture.'}
+                {type === 'daily' ? `${user.name.split(' ')[0]}'s journal` : 'Glucose reports'}
               </h1>
               <p>
                 {type === 'daily'
-                  ? 'Keep track of your day, one reading at a time.'
-                  : 'Your recorded readings, brought together.'}
+                  ? 'Record up to four readings for the selected date.'
+                  : 'Review daily values and monthly summaries.'}
               </p>
             </div>
             <button
@@ -170,11 +162,8 @@ function Dashboard({ user, settings, onLogout }) {
               onClick={() =>
                 openEditor({
                   slot:
-                    reports?.daily.readings.length < 4
-                      ? ['morning', 'breakfast', 'lunch', 'dinner'].find(
-                          (slot) => !reports.daily.readings.some((item) => item.slot === slot),
-                        )
-                      : 'morning',
+                    SLOTS.find((slot) => !dailyReadings.some((reading) => reading.slot === slot.id))
+                      ?.id || SLOTS[0].id,
                 })
               }
             >
@@ -298,7 +287,6 @@ function Dashboard({ user, settings, onLogout }) {
             )
           )}
           <footer className="page-footer">
-            <span>Made for your everyday.</span>
             <span>
               Dates follow {settings.timeZone}. This journal does not provide medical advice.
             </span>

@@ -37,7 +37,7 @@ export default function TrendChart({ readings, start, end }) {
     <section className="trend-section" aria-labelledby="trend-title">
       <div className="section-heading">
         <div>
-          <h2 id="trend-title">The month, at a glance</h2>
+          <h2 id="trend-title">Daily average glucose</h2>
           <p className="muted">
             Daily averages · {formatDate(start, { month: 'long', year: 'numeric', day: undefined })}
           </p>

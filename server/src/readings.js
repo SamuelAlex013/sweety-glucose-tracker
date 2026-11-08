@@ -49,7 +49,8 @@ export function readingsRouter(pool, getToday) {
         throw new ApiError(409, 'You can add only 4 readings per day.');
       const duplicate = existingDay.rows.some((row) => row.slot === slot);
       if (duplicate) {
-        const message = `You already have a ${SLOTS.find((item) => item.id === slot).label} reading for this date.`;
+        const label = SLOTS.find((item) => item.id === slot).label;
+        const message = `You already have ${slot === 'morning' ? 'a' : 'an'} ${label} reading for this date.`;
         throw new ApiError(409, message, { slot: message });
       }
       const result = editing

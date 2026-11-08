@@ -163,6 +163,9 @@ test('report ranges exclude future-month and older readings and round averages t
     [monthly.start, monthly.end, monthly.count, monthly.average],
     ['2026-09-01', '2026-09-30', 2, 105],
   );
+  const earlier = (await agent.get('/api/reports?date=2026-10-14').expect(200)).body.reports;
+  assert.deepEqual([earlier.daily.count, earlier.daily.average], [1, 600]);
+  assert.deepEqual([earlier.mtd.count, earlier.mtd.average], [2, 320]);
   const empty = (await agent.get('/api/reports?date=2026-01-01')).body.reports.daily;
   assert.deepEqual(
     [empty.count, empty.average, empty.lowest, empty.highest, empty.readings],

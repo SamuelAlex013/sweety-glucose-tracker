@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ArrowRight, Check, Eye, EyeOff, LockKeyhole } from 'lucide-react';
 import { api } from '../api.js';
+import { SLOTS } from '../../../shared/domain.js';
 import Brand from './Brand.jsx';
 
 export default function AuthPage({ onLogin }) {
@@ -36,31 +37,30 @@ export default function AuthPage({ onLogin }) {
         <Brand />
         <div className="auth-message">
           <h1>
-            A little record.
-            <br />A clearer picture.
+            Your blood glucose,
+            <br />
+            day by day.
           </h1>
-          <p>Your daily readings, together in one place. Make room for a simple routine.</p>
+          <p>Record four daily slots and review daily and monthly reports.</p>
           <div className="sample-log" aria-label="Illustrative daily log">
             <div className="sample-title">
               <span>A day in your journal</span>
               <span>Example</span>
             </div>
-            {['Morning (fasting)', 'After breakfast', 'After lunch', 'After dinner'].map(
-              (label, index) => (
-                <div className="sample-row" key={label}>
-                  <span className="sample-check">
-                    <Check size={14} />
-                  </span>
-                  <span>{label}</span>
-                  <strong>
-                    {[98, 132, 125, 118][index]} <small>mg/dl</small>
-                  </strong>
-                </div>
-              ),
-            )}
+            {SLOTS.map((slot, index) => (
+              <div className="sample-row" key={slot.id}>
+                <span className="sample-check">
+                  <Check size={14} />
+                </span>
+                <span>{slot.label}</span>
+                <strong>
+                  {[98, 132, 125, 118][index]} <small>mg/dl</small>
+                </strong>
+              </div>
+            ))}
           </div>
         </div>
-        <p className="auth-footnote">A personal journal, one reading at a time.</p>
+        <p className="auth-footnote">All values are recorded in mg/dl.</p>
       </section>
       <section className="auth-form-area">
         <div className="auth-form-wrap">

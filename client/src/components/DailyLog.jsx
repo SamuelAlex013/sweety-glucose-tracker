@@ -3,7 +3,7 @@ import { Check, Coffee, Moon, Pencil, Plus, Sun, Sunrise, Trash2 } from 'lucide-
 import { SLOTS } from '../../../shared/domain.js';
 import { api } from '../api.js';
 
-export const slotIcons = [Sunrise, Coffee, Sun, Moon];
+const slotIcons = [Sunrise, Coffee, Sun, Moon];
 
 export default function DailyLog({ readings, onAdd, onEdit, onDeleted, onSessionExpired }) {
   const [deleting, setDeleting] = useState(null);
@@ -30,7 +30,7 @@ export default function DailyLog({ readings, onAdd, onEdit, onDeleted, onSession
       <div className="section-heading">
         <div>
           <h2 id="daily-log-title">Daily readings</h2>
-          <p className="muted">A place for each part of your day.</p>
+          <p className="muted">One reading per time slot.</p>
         </div>
         <span className="count-label">{readings.length} of 4 recorded</span>
       </div>
@@ -39,7 +39,7 @@ export default function DailyLog({ readings, onAdd, onEdit, onDeleted, onSession
           const reading = readings.find((item) => item.slot === slot.id);
           const Icon = slotIcons[index];
           return (
-            <div className={`slot-row ${reading ? 'recorded' : ''}`} key={slot.id}>
+            <div className="slot-row" key={slot.id}>
               <span className="slot-icon">
                 <Icon size={23} strokeWidth={1.6} />
               </span>

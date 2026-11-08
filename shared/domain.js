@@ -2,17 +2,15 @@ export const SLOTS = [
   {
     id: 'morning',
     label: 'Morning (fasting)',
-    short: 'Morning',
     context: 'Before your first meal',
   },
   {
     id: 'breakfast',
     label: 'After breakfast',
-    short: 'Breakfast',
     context: 'After your morning meal',
   },
-  { id: 'lunch', label: 'After lunch', short: 'Lunch', context: 'After your midday meal' },
-  { id: 'dinner', label: 'After dinner', short: 'Dinner', context: 'After your evening meal' },
+  { id: 'lunch', label: 'After lunch', context: 'After your midday meal' },
+  { id: 'dinner', label: 'After dinner', context: 'After your evening meal' },
 ];
 
 export function todayIn(timeZone = 'UTC', now = new Date()) {

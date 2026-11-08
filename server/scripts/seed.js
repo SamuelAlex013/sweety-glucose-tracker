@@ -14,7 +14,7 @@ try {
   const user = await client.query(
     `INSERT INTO users(id, name, email, password_hash) VALUES ($1, $2, $3, $4)
     ON CONFLICT(email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    [randomUUID(), 'Alex Morgan', email, passwordHash],
+    [randomUUID(), 'Samuel Alexander', email, passwordHash],
   );
   const today = todayIn(config.timeZone);
   const start = reportRanges(today).monthly.start;
