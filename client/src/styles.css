@@ -224,7 +224,7 @@ select {
   font-weight: 500;
 }
 input::placeholder {
-  color: #677c87;
+  color: var(--muted);
 }
 input[aria-invalid='true'],
 select[aria-invalid='true'] {
@@ -804,7 +804,7 @@ select[aria-invalid='true'] {
   background: #fff0ee;
 }
 .empty-slot {
-  color: #687d89;
+  color: var(--muted);
   font-size: 0.77rem;
 }
 .add-slot {
@@ -910,7 +910,7 @@ select[aria-invalid='true'] {
 .trend-chart text {
   font-family: 'Nunito Sans Variable', sans-serif;
   font-size: 11px;
-  fill: #657b87;
+  fill: var(--muted);
 }
 .chart-grid {
   stroke: #e4ecf0;
@@ -984,7 +984,7 @@ tbody tr:last-child td {
   margin-top: 27px;
   padding-bottom: 5px;
   font-size: 0.66rem;
-  color: #607783;
+  color: var(--muted);
 }
 .loading-panel {
   padding: 100px 20px;
