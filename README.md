@@ -67,7 +67,7 @@ With a native install, use `createdb -U postgres sweety_test`. Set `TEST_DATABAS
 npm run test:integration
 ```
 
-The suite creates a uniquely named schema, migrates it, tests the real API and PostgreSQL constraints, then drops only that schema. It checks bcrypt storage, session expiry/logout, account isolation, CRUD, all required validations, concurrent duplicate submissions, report aggregates, and moving readings into occupied slots. The test database role needs permission to create schemas.
+The suite creates a uniquely named schema, migrates it, tests the real API and PostgreSQL constraints, then drops only that schema. It checks bcrypt storage, session expiry/logout, account isolation, CRUD, all required validations, concurrent duplicate submissions, report aggregates, moving readings into occupied slots, and recovery after an idle database connection is terminated. The test database role needs permission to create schemas.
 
 For end-to-end browser tests:
 
@@ -143,11 +143,13 @@ All screenshots show synthetic demo data. To reproduce them, seed the demo accou
 - Optional work included: a responsive daily-average chart, PostgreSQL Compose setup, frontend form tests, and browser tests. Pagination, Redis, reminder jobs, and doctor roles are left out to keep the required app focused.
 - With more time: password recovery/email verification, per-user timezone preferences, paginated historical records, accessibility testing with assistive technology, backup/restore procedures, and a shared rate-limit store for multiple API instances.
 
-The Compose definition is included for reproducible setup. Local verification used PostgreSQL 17 installed on Windows because Docker Desktop was not running.
+The Compose definition starts PostgreSQL; the Express API and React development server run on the host. It was verified on Windows with Docker Engine 28.3.2, Compose 2.38.2, and containerized PostgreSQL 17.11. An isolated project used host port 55433 because the native PostgreSQL installation already occupied 5432. Migrations, the Samuel Alexander seed, all 9 API/database tests, and both browser tests passed against that container.
+
+Restart checks verified that the API reconnects after PostgreSQL closes an idle connection. Removing and recreating the container without deleting its named volume preserved the 154 demo readings and browser-created accounts. The temporary test containers and servers were stopped afterward; the test volume was retained. Native PostgreSQL 17 was also verified separately.
 
 ## Requirement verification
 
-Reviewed against the assignment on 8 November 2026. The automated suites contain 17 tests; their assertions cover multiple cases per test.
+Reviewed against the assignment on 8 November 2026. The automated suites contain 18 tests; their assertions cover multiple cases per test.
 
 | Required area                                 | Verification                                                                                                                                                                              |
 | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -160,4 +162,4 @@ Reviewed against the assignment on 8 November 2026. The automated suites contain
 
 The demo account and screenshots use **Samuel Alexander**, with synthetic readings. The quality review removed generic promotional copy, unused slot metadata and CSS, and duplicated frontend slot definitions. Validation and calendar rules are shared by the API and form. The deterministic design scan reported no findings; that is a limited pattern check, not proof of design quality or full accessibility compliance.
 
-Optional chart and frontend tests are implemented. Compose configuration validates, but starting the Docker service was not tested locally; the database behavior was tested against native PostgreSQL 17. The app has not been deployed to a public web host.
+Optional chart and frontend tests are implemented. Compose startup, health checks, database initialization, application behavior against the container, restart recovery, and volume persistence have been tested locally. The app has not been deployed to a public web host.

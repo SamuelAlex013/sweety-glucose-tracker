@@ -1,6 +1,8 @@
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import request from 'supertest';
 import bcrypt from 'bcrypt';
 import { createPool } from '../src/db.js';
@@ -199,4 +201,28 @@ test('PostgreSQL itself enforces valid slots, values, and unique slots', async (
   await assert.rejects(insert('morning', 100), { code: '23505' });
   await assert.rejects(insert('snack', 100), { code: '23514' });
   await assert.rejects(insert('lunch', 601), { code: '23514' });
+});
+
+test('losing an idle database connection does not crash the API process', async () => {
+  // Use a child process so an unhandled pool error fails this regression test instead of the suite.
+  const script = `
+    import assert from 'node:assert/strict';
+    import { createPool } from ${JSON.stringify(new URL('../src/db.js', import.meta.url).href)};
+    const victim = createPool(process.env.TEST_DATABASE_URL, { max: 1, idleTimeoutMillis: 0 });
+    const controller = createPool(process.env.TEST_DATABASE_URL, { max: 1 });
+    try {
+      const result = await victim.query('SELECT pg_backend_pid() AS pid');
+      const removed = new Promise(resolve => victim.once('remove', resolve));
+      await controller.query('SELECT pg_terminate_backend($1)', [result.rows[0].pid]);
+      await removed;
+      assert.equal((await victim.query('SELECT 1 AS value')).rows[0].value, 1);
+    } finally {
+      await victim.end();
+      await controller.end();
+    }
+  `;
+  await promisify(execFile)(process.execPath, ['--input-type=module', '--eval', script], {
+    env: process.env,
+    timeout: 10000,
+  });
 });
