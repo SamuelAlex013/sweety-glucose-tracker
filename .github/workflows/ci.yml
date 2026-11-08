@@ -4,6 +4,12 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     services:
+      redis:
+        image: redis:7.4-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
       postgres:
         image: postgres:17-alpine
         env:
@@ -18,6 +24,12 @@ jobs:
       DATABASE_URL: postgresql://sweety:sweety_local@localhost:5432/sweety_test
       TEST_DATABASE_URL: postgresql://sweety:sweety_local@localhost:5432/sweety_test
       APP_ORIGIN: http://localhost:5173
+      REDIS_URL: redis://localhost:6379
+      TEST_REDIS_URL: redis://localhost:6379
+      DB_PORT: 55434
+      REDIS_PORT: 56379
+      APP_PORT: 3003
+      DOCKER_APP_ORIGIN: http://localhost:3003
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -29,6 +41,15 @@ jobs:
       - run: npm test
       - run: npm run test:integration
       - run: npm run db:migrate
+      - run: npm run db:seed
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - run: docker compose up --build -d --wait --wait-timeout 180
+      - run: docker compose exec -T app npm run db:seed
+      - run: docker compose exec -T app npm run reminders:run
+      - run: npm run test:e2e
+        env:
+          E2E_BASE_URL: http://localhost:3003
+      - if: always()
+        run: docker compose down

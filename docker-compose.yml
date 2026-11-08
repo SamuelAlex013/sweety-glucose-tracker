@@ -1,12 +1,31 @@
+name: sweety
+
+x-app: &app
+  image: sweety-app:local
+  environment:
+    DATABASE_URL: postgresql://sweety@db:5432/sweety
+    PGPASSWORD: ${POSTGRES_PASSWORD:-sweety_local}
+    REDIS_URL: redis://redis:6379
+    PORT: 3001
+    NODE_ENV: production
+    APP_ORIGIN: ${DOCKER_APP_ORIGIN:-http://localhost:3001}
+    APP_TIMEZONE: ${APP_TIMEZONE:-UTC}
+    COOKIE_SECURE: '${COOKIE_SECURE:-false}'
+    REMINDER_CRON: ${REMINDER_CRON:-0 20 * * *}
+    DEMO_EMAIL: ${DEMO_EMAIL:-demo@sweety.local}
+    DEMO_PASSWORD: ${DEMO_PASSWORD:-SweetyDemo2026!}
+    DEMO_DOCTOR_EMAIL: ${DEMO_DOCTOR_EMAIL:-doctor@sweety.local}
+    DEMO_DOCTOR_PASSWORD: ${DEMO_DOCTOR_PASSWORD:-SweetyDoctor2026!}
+
 services:
   db:
     image: postgres:17-alpine
     environment:
       POSTGRES_USER: sweety
-      POSTGRES_PASSWORD: sweety_local
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sweety_local}
       POSTGRES_DB: sweety
     ports:
-      - '127.0.0.1:5432:5432'
+      - '127.0.0.1:${DB_PORT:-5432}:5432'
     volumes:
       - sweety_data:/var/lib/postgresql/data
     healthcheck:
@@ -14,6 +33,51 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+  redis:
+    image: redis:7.4-alpine
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  migrate:
+    <<: *app
+    command: ['node', 'server/scripts/migrate.js']
+    depends_on:
+      db: { condition: service_healthy }
+  app:
+    <<: *app
+    build: .
+    ports:
+      - '127.0.0.1:${APP_PORT:-3001}:3001'
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3001/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    restart: unless-stopped
+  worker:
+    <<: *app
+    command: ['node', 'server/src/worker.js']
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    restart: unless-stopped
 
 volumes:
   sweety_data:
+  redis_data:

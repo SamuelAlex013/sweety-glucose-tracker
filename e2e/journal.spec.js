@@ -12,7 +12,7 @@ test('a patient can register, validate, record, edit, report, delete, and log ba
   await page.getByLabel('Password', { exact: true }).fill('Journal-test-2026');
   await page.getByRole('button', { name: 'Create account', exact: true }).click();
   await expect(page.getByRole('heading', { name: "Samuel's journal" })).toBeVisible();
-  await expect(page.getByText('Your picture starts with a reading')).toBeVisible();
+  await expect(page.getByText('Add readings for this period')).toBeVisible();
   await page.getByRole('button', { name: 'Add After lunch', exact: true }).click();
   await page.getByRole('button', { name: 'Save reading' }).click();
   await expect(page.getByText('Please enter a glucose value.')).toBeVisible();
@@ -49,7 +49,7 @@ test('a patient can register, validate, record, edit, report, delete, and log ba
   await expect(page.getByRole('heading', { name: 'Readings in this report' })).toBeVisible();
   await expect(page.getByRole('cell', { name: '135', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Previous month', exact: true }).click();
-  await expect(page.getByText('Your picture starts with a reading')).toBeVisible();
+  await expect(page.getByText('Add readings for this period')).toBeVisible();
   await page.getByRole('button', { name: 'Daily', exact: true }).click();
   await page.getByRole('button', { name: 'Delete After lunch' }).click();
   await page.getByRole('button', { name: 'Keep reading' }).click();
@@ -101,4 +101,48 @@ test('mobile layout keeps the journal and form within the viewport', async ({ pa
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
+});
+
+test('a patient browses reading pages and daily check-ins', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Email address').fill(process.env.DEMO_EMAIL || 'demo@sweety.local');
+  await page
+    .getByLabel('Password', { exact: true })
+    .fill(process.env.DEMO_PASSWORD || 'SweetyDemo2026!');
+  await page.getByRole('button', { name: 'Log in', exact: true }).click();
+  await page.getByRole('heading', { name: "Samuel's journal" }).waitFor();
+  await page.getByRole('button', { name: 'History', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Saved readings' })).toBeVisible();
+  await expect(page.locator('tbody tr')).toHaveCount(20);
+  const first = await page.locator('tbody tr').first().innerText();
+  await page.getByRole('button', { name: 'Next page' }).click();
+  await expect(page.getByRole('status')).toContainText('Page 2 of');
+  await expect(page.locator('tbody tr').first()).not.toHaveText(first);
+  await page.getByRole('button', { name: 'Previous page' }).click();
+  await expect(page.getByRole('status')).toContainText('Page 1 of');
+  await page.getByRole('button', { name: 'Reminders', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Recent check-ins' })).toBeVisible();
+});
+
+test('a doctor reviews the assigned patient reports', async ({ page }) => {
+  await page.goto('/');
+  await page
+    .getByLabel('Email address')
+    .fill(process.env.DEMO_DOCTOR_EMAIL || 'doctor@sweety.local');
+  await page
+    .getByLabel('Password', { exact: true })
+    .fill(process.env.DEMO_DOCTOR_PASSWORD || 'SweetyDoctor2026!');
+  await page.getByRole('button', { name: 'Log in', exact: true }).click();
+  await expect(page.getByLabel('Assigned patient')).toHaveValue(/.+/);
+  await expect(page.getByLabel('Assigned patient')).toContainText('Samuel Alexander');
+  await expect(page.getByRole('heading', { name: 'Month to date', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Add reading', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^Edit / })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Daily', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Daily overview' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'Morning (fasting)', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Previous month', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Previous month', exact: true })).toBeVisible();
+  await page.getByLabel('Selected date').fill('2000-01-01');
+  await expect(page.getByText('Patient readings will appear here')).toBeVisible();
 });

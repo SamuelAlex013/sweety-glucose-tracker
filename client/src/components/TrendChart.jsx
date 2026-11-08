@@ -1,13 +1,16 @@
 import { formatDate } from '../format.js';
+import { SLOTS } from '../../../shared/domain.js';
 
 export default function TrendChart({ readings, start, end }) {
-  const dates = [...new Set(readings.map((reading) => reading.date))];
-  const points = dates.map((date) => {
-    const values = readings
-      .filter((reading) => reading.date === date)
-      .map((reading) => reading.value);
-    return { date, value: values.reduce((sum, value) => sum + value, 0) / values.length };
-  });
+  const day = 86400000;
+  const points = readings
+    .map((reading) => ({
+      ...reading,
+      position:
+        new Date(`${reading.date}T00:00:00Z`).getTime() +
+        ((SLOTS.findIndex((slot) => slot.id === reading.slot) + 0.5) * day) / 4,
+    }))
+    .sort((a, b) => a.position - b.position);
   const min = points.length
     ? Math.floor(Math.min(...points.map((point) => point.value)) / 20) * 20 - 20
     : 60;
@@ -21,9 +24,8 @@ export default function TrendChart({ readings, start, end }) {
     top = 20,
     bottom = 40;
   const startTime = new Date(`${start}T00:00:00Z`).getTime();
-  const total = Math.max(86400000, new Date(`${end}T00:00:00Z`).getTime() - startTime);
-  const x = (date) =>
-    left + ((new Date(`${date}T00:00:00Z`).getTime() - startTime) / total) * (width - left - right);
+  const total = new Date(`${end}T00:00:00Z`).getTime() + day - startTime;
+  const x = (point) => left + ((point.position - startTime) / total) * (width - left - right);
   const y = (value) => top + ((max - value) / (max - min)) * (height - top - bottom);
   // Do not connect across unrecorded days: gaps are missing data, not a measured trend.
   const segments = [];
@@ -37,9 +39,10 @@ export default function TrendChart({ readings, start, end }) {
     <section className="trend-section" aria-labelledby="trend-title">
       <div className="section-heading">
         <div>
-          <h2 id="trend-title">Daily average glucose</h2>
+          <h2 id="trend-title">Glucose readings over the month</h2>
           <p className="muted">
-            Daily averages · {formatDate(start, { month: 'long', year: 'numeric', day: undefined })}
+            {readings.length} readings ·{' '}
+            {formatDate(start, { month: 'long', year: 'numeric', day: undefined })}
           </p>
         </div>
         <span className="chart-legend">
@@ -48,7 +51,7 @@ export default function TrendChart({ readings, start, end }) {
         </span>
       </div>
       {!points.length ? (
-        <p className="chart-empty">Your trend will appear here as you record readings.</p>
+        <p className="chart-empty">Recorded readings for this period will appear here.</p>
       ) : (
         <>
           <svg
@@ -57,10 +60,13 @@ export default function TrendChart({ readings, start, end }) {
             role="img"
             aria-labelledby="chart-title chart-desc"
           >
-            <title id="chart-title">Daily average glucose in mg/dl</title>
+            <title id="chart-title">Recorded glucose readings in mg/dl</title>
             <desc id="chart-desc">
               {points
-                .map((point) => `${formatDate(point.date)}: ${point.value.toFixed(1)}`)
+                .map(
+                  (point) =>
+                    `${formatDate(point.date)}, ${SLOTS.find((slot) => slot.id === point.slot).label}: ${point.value} mg/dl`,
+                )
                 .join('; ')}
             </desc>
             {[min, (min + max) / 2, max].map((tick) => (
@@ -79,22 +85,17 @@ export default function TrendChart({ readings, start, end }) {
             ))}
             {segments.map((segment) => (
               <polyline
-                key={segment[0].date}
-                points={segment.map((point) => `${x(point.date)},${y(point.value)}`).join(' ')}
+                key={segment[0].id}
+                points={segment.map((point) => `${x(point)},${y(point.value)}`).join(' ')}
                 fill="none"
                 className="chart-line"
               />
             ))}
             {points.map((point) => (
-              <circle
-                key={point.date}
-                cx={x(point.date)}
-                cy={y(point.value)}
-                r="4"
-                className="chart-dot"
-              >
+              <circle key={point.id} cx={x(point)} cy={y(point.value)} r="4" className="chart-dot">
                 <title>
-                  {formatDate(point.date)}: {point.value.toFixed(1)} mg/dl
+                  {formatDate(point.date)}, {SLOTS.find((slot) => slot.id === point.slot).label}:{' '}
+                  {point.value} mg/dl
                 </title>
               </circle>
             ))}
@@ -103,7 +104,7 @@ export default function TrendChart({ readings, start, end }) {
               .map((date) => (
                 <text
                   key={date}
-                  x={x(date)}
+                  x={date === start ? left : width - right}
                   y={height - 10}
                   textAnchor={date === start ? 'start' : 'end'}
                 >
@@ -112,7 +113,8 @@ export default function TrendChart({ readings, start, end }) {
               ))}
           </svg>
           <p className="chart-note">
-            Each point is the average of readings recorded that day. Missing days are left open.
+            Each point is a recorded reading, ordered by date and meal slot. Missing days are left
+            open.
           </p>
         </>
       )}

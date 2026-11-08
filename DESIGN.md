@@ -14,6 +14,8 @@ The palette is deliberately restrained. Reports sit directly on the neutral canv
 
 Desktop: a 224px white navigation rail, date and period controls, report summary, daily rows, and a true-data trend. The outer rail stretches with the entire page; its inner navigation stays sticky within the viewport. This keeps the rail continuous in full-page screenshots while leaving the account controls accessible during scrolling. Brand placement aligns with the top bar. Mobile: top navigation, two-column statistics, and the same four rows. Forms are inline and keep the selected date. Delete confirmation appears next to the affected reading. Errors, loading, empty reports, session expiry, and successful changes have explicit text.
 
+Patients also have paginated history and daily check-in views. Doctor navigation leads to assigned-patient reports with a patient selector. Monthly charts plot each recorded value in meal-slot order. Mobile navigation uses two columns to keep all patient destinations visible.
+
 ## Reference
 
 https://lovable.dev/templates/apps/internal-tools/customer-health-dashboard-template

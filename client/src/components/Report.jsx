@@ -1,7 +1,7 @@
 import { Activity } from 'lucide-react';
 import { formatDate } from '../format.js';
 
-export default function Report({ report, type }) {
+export default function Report({ report, type, readOnly = false }) {
   const title = { daily: 'Daily overview', mtd: 'Month to date', monthly: 'Previous month' }[type];
   return (
     <section className="report-summary" aria-labelledby="report-title">
@@ -48,10 +48,11 @@ export default function Report({ report, type }) {
       ) : (
         <div className="empty-report">
           <Activity size={26} />
-          <h3>Your picture starts with a reading</h3>
+          <h3>{readOnly ? 'Patient readings will appear here' : 'Add readings for this period'}</h3>
           <p>
-            No readings in this date range yet. Add a reading or choose another date to see your
-            report.
+            {readOnly
+              ? "Choose another date to review this patient's recordings."
+              : 'Choose another date or add a reading for the selected period.'}
           </p>
         </div>
       )}

@@ -9,6 +9,8 @@ import {
   LogOut,
   Plus,
   RotateCcw,
+  List,
+  Bell,
 } from 'lucide-react';
 import { api } from './api.js';
 import { SLOTS } from '../../shared/domain.js';
@@ -20,10 +22,16 @@ import DailyLog from './components/DailyLog.jsx';
 import Report from './components/Report.jsx';
 import TrendChart from './components/TrendChart.jsx';
 import HistoryTable from './components/HistoryTable.jsx';
+import ReadingHistory from './components/ReadingHistory.jsx';
+import Reminders from './components/Reminders.jsx';
 
 function Dashboard({ user, settings, onLogout }) {
+  const isDoctor = user.role === 'doctor';
+  const [page, setPage] = useState('journal');
+  const [patients, setPatients] = useState([]);
+  const [patientId, setPatientId] = useState('');
   const [date, setDate] = useState(settings.today);
-  const [type, setType] = useState('daily');
+  const [type, setType] = useState(isDoctor ? 'mtd' : 'daily');
   const [reports, setReports] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -38,10 +46,36 @@ function Dashboard({ user, settings, onLogout }) {
   );
 
   useEffect(() => {
+    if (!isDoctor) return;
+    let active = true;
+    api('/patients')
+      .then(({ patients }) => {
+        if (!active) return;
+        setPatients(patients);
+        setPatientId((current) =>
+          patients.some((patient) => patient.id === current) ? current : patients[0]?.id || '',
+        );
+        if (!patients.length) setLoading(false);
+      })
+      .catch((error) => {
+        if (!active) return;
+        if (error.status === 401) sessionExpired();
+        else {
+          setError(error.message);
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [isDoctor, revision, sessionExpired]);
+
+  useEffect(() => {
+    if (page !== 'journal' || (isDoctor && !patientId)) return;
     let active = true;
     setLoading(true);
     setError('');
-    api(`/reports?date=${date}`)
+    api(`/reports?date=${date}${isDoctor ? `&patientId=${patientId}` : ''}`)
       .then(({ reports }) => {
         if (active) setReports(reports);
       })
@@ -56,7 +90,7 @@ function Dashboard({ user, settings, onLogout }) {
     return () => {
       active = false;
     };
-  }, [date, revision, sessionExpired]);
+  }, [date, revision, sessionExpired, isDoctor, patientId, page]);
 
   useEffect(() => {
     if (!notice) return;
@@ -65,6 +99,7 @@ function Dashboard({ user, settings, onLogout }) {
   }, [notice]);
 
   function openEditor(reading = {}) {
+    setNotice('');
     setEditor({ ...reading, key: Date.now() });
     setTimeout(() => editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0);
   }
@@ -76,6 +111,7 @@ function Dashboard({ user, settings, onLogout }) {
   }
 
   function saved(reading) {
+    setPage('journal');
     setEditor(null);
     setDate(reading.date);
     setType('daily');
@@ -103,32 +139,64 @@ function Dashboard({ user, settings, onLogout }) {
             <Brand />
           </a>
           <nav aria-label="Main navigation">
+            {!isDoctor && (
+              <button
+                className={page === 'journal' && type === 'daily' ? 'nav-item active' : 'nav-item'}
+                onClick={() => {
+                  setType('daily');
+                  setPage('journal');
+                  setEditor(null);
+                }}
+              >
+                <BookOpen size={19} />
+                My journal
+              </button>
+            )}
             <button
-              className={type === 'daily' ? 'nav-item active' : 'nav-item'}
-              onClick={() => {
-                setType('daily');
-                setEditor(null);
-              }}
-            >
-              <BookOpen size={19} />
-              My journal
-            </button>
-            <button
-              className={type !== 'daily' ? 'nav-item active' : 'nav-item'}
+              className={
+                page === 'journal' && (type !== 'daily' || isDoctor)
+                  ? 'nav-item active'
+                  : 'nav-item'
+              }
               onClick={() => {
                 setType('mtd');
+                setPage('journal');
                 setEditor(null);
               }}
             >
               <ChartNoAxesCombined size={19} />
-              Reports
+              {isDoctor ? 'Patient reports' : 'Reports'}
             </button>
+            {!isDoctor && (
+              <>
+                <button
+                  className={page === 'history' ? 'nav-item active' : 'nav-item'}
+                  onClick={() => {
+                    setPage('history');
+                    setEditor(null);
+                  }}
+                >
+                  <List size={19} />
+                  History
+                </button>
+                <button
+                  className={page === 'reminders' ? 'nav-item active' : 'nav-item'}
+                  onClick={() => {
+                    setPage('reminders');
+                    setEditor(null);
+                  }}
+                >
+                  <Bell size={19} />
+                  Reminders
+                </button>
+              </>
+            )}
           </nav>
           <div className="account">
             <span className="avatar">{user.name.slice(0, 1).toUpperCase()}</span>
             <div>
               <strong>{user.name}</strong>
-              <span>Personal account</span>
+              <span>{isDoctor ? 'Doctor account' : 'Personal account'}</span>
             </div>
             <button className="icon-button" aria-label="Log out" onClick={logout}>
               <LogOut size={18} />
@@ -148,77 +216,114 @@ function Dashboard({ user, settings, onLogout }) {
           <div className="page-heading">
             <div>
               <h1>
-                {type === 'daily' ? `${user.name.split(' ')[0]}'s journal` : 'Glucose reports'}
+                {isDoctor
+                  ? 'Patient reports'
+                  : page === 'history'
+                    ? 'Reading history'
+                    : page === 'reminders'
+                      ? 'Daily check-ins'
+                      : type === 'daily'
+                        ? `${user.name.split(' ')[0]}'s journal`
+                        : 'Glucose reports'}
               </h1>
               <p>
-                {type === 'daily'
-                  ? 'Record up to four readings for the selected date.'
-                  : 'Review daily values and monthly summaries.'}
+                {isDoctor
+                  ? 'Review readings for your assigned patients.'
+                  : page === 'history'
+                    ? 'Browse your readings, 20 at a time.'
+                    : page === 'reminders'
+                      ? 'Check-ins from your daily recording routine.'
+                      : type === 'daily'
+                        ? 'Record up to four readings for the selected date.'
+                        : 'Review daily values and monthly summaries.'}
               </p>
             </div>
-            <button
-              className="button primary"
-              onClick={() =>
-                openEditor({
-                  slot:
-                    SLOTS.find((slot) => !dailyReadings.some((reading) => reading.slot === slot.id))
-                      ?.id || SLOTS[0].id,
-                })
-              }
-            >
-              <Plus size={18} />
-              Add reading
-            </button>
+            {!isDoctor && page === 'journal' && (
+              <button
+                className="button primary"
+                onClick={() =>
+                  openEditor({
+                    slot:
+                      SLOTS.find(
+                        (slot) => !dailyReadings.some((reading) => reading.slot === slot.id),
+                      )?.id || SLOTS[0].id,
+                  })
+                }
+              >
+                <Plus size={18} />
+                Add reading
+              </button>
+            )}
           </div>
-          <div className="report-toolbar">
-            <div className="tabs" role="group" aria-label="Report period">
-              {[
-                ['daily', 'Daily'],
-                ['mtd', 'Month to date'],
-                ['monthly', 'Previous month'],
-              ].map(([value, label]) => (
+          {isDoctor && patients.length > 0 && (
+            <label className="patient-picker">
+              Assigned patient
+              <select
+                value={patientId}
+                onChange={(event) => {
+                  setPatientId(event.target.value);
+                  setEditor(null);
+                }}
+              >
+                {patients.map((patient) => (
+                  <option value={patient.id} key={patient.id}>
+                    {patient.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {page === 'journal' && (
+            <div className="report-toolbar">
+              <div className="tabs" role="group" aria-label="Report period">
+                {[
+                  ['daily', 'Daily'],
+                  ['mtd', 'Month to date'],
+                  ['monthly', 'Previous month'],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    aria-pressed={type === value}
+                    className={type === value ? 'selected' : ''}
+                    onClick={() => {
+                      setType(value);
+                      setEditor(null);
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="date-picker">
                 <button
-                  key={value}
-                  aria-pressed={type === value}
-                  className={type === value ? 'selected' : ''}
-                  onClick={() => {
-                    setType(value);
-                    setEditor(null);
-                  }}
+                  className="icon-button"
+                  aria-label="Previous day"
+                  disabled={date <= '1900-01-01'}
+                  onClick={() => changeDate(shiftDate(date, -1))}
                 >
-                  {label}
+                  <ArrowLeft size={17} />
                 </button>
-              ))}
+                <label>
+                  <span className="sr-only">Selected date</span>
+                  <input
+                    type="date"
+                    value={date}
+                    min="1900-01-01"
+                    max={settings.today}
+                    onChange={(event) => changeDate(event.target.value)}
+                  />
+                </label>
+                <button
+                  className="icon-button"
+                  aria-label="Next day"
+                  disabled={date >= settings.today}
+                  onClick={() => changeDate(shiftDate(date, 1))}
+                >
+                  <ArrowRight size={17} />
+                </button>
+              </div>
             </div>
-            <div className="date-picker">
-              <button
-                className="icon-button"
-                aria-label="Previous day"
-                disabled={date <= '1900-01-01'}
-                onClick={() => changeDate(shiftDate(date, -1))}
-              >
-                <ArrowLeft size={17} />
-              </button>
-              <label>
-                <span className="sr-only">Selected date</span>
-                <input
-                  type="date"
-                  value={date}
-                  min="1900-01-01"
-                  max={settings.today}
-                  onChange={(event) => changeDate(event.target.value)}
-                />
-              </label>
-              <button
-                className="icon-button"
-                aria-label="Next day"
-                disabled={date >= settings.today}
-                onClick={() => changeDate(shiftDate(date, 1))}
-              >
-                <ArrowRight size={17} />
-              </button>
-            </div>
-          </div>
+          )}
           <div aria-live="polite" className="notice-region">
             {notice && (
               <p className="success-notice">
@@ -252,7 +357,16 @@ function Dashboard({ user, settings, onLogout }) {
               </button>
             </div>
           )}
-          {loading ? (
+          {page === 'history' ? (
+            <ReadingHistory onEdit={openEditor} onSessionExpired={sessionExpired} />
+          ) : page === 'reminders' ? (
+            <Reminders onSessionExpired={sessionExpired} timeZone={settings.timeZone} />
+          ) : isDoctor && !patients.length && !loading ? (
+            <div className="empty-state">
+              <h2>Patient assignments will appear here</h2>
+              <p>Your care team can assign patient accounts to your doctor account.</p>
+            </div>
+          ) : loading ? (
             <div className="loading-panel" role="status">
               <span className="loading-dot" />
               Loading your journal…
@@ -261,8 +375,8 @@ function Dashboard({ user, settings, onLogout }) {
             !error &&
             reports && (
               <>
-                <Report report={reports[type]} type={type} />
-                {type === 'daily' ? (
+                <Report report={reports[type]} type={type} readOnly={isDoctor} />
+                {type === 'daily' && !isDoctor ? (
                   <DailyLog
                     key={date}
                     readings={reports.daily.readings}
@@ -275,7 +389,10 @@ function Dashboard({ user, settings, onLogout }) {
                     onSessionExpired={sessionExpired}
                   />
                 ) : (
-                  <HistoryTable readings={reports[type].readings} onEdit={openEditor} />
+                  <HistoryTable
+                    readings={reports[type].readings}
+                    onEdit={isDoctor ? undefined : openEditor}
+                  />
                 )}
                 <TrendChart
                   readings={reports[type === 'monthly' ? 'monthly' : 'mtd'].readings}
@@ -286,9 +403,7 @@ function Dashboard({ user, settings, onLogout }) {
             )
           )}
           <footer className="page-footer">
-            <span>
-              Dates follow {settings.timeZone}. This journal does not provide medical advice.
-            </span>
+            <span>Dates follow {settings.timeZone}. Values are shown in mg/dl.</span>
           </footer>
         </main>
       </div>
