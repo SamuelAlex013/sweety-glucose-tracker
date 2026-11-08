@@ -2,6 +2,18 @@
 
 These captures use synthetic accounts and readings. The patient journal belongs to Samuel Alexander; the seeded doctor is Dr. Meera Shah. The CRUD sequence uses a separate synthetic patient account.
 
+## Follow the working flow
+
+The captures come from browser interactions with the running app. The add, edit, and delete screenshots follow the same account and date:
+
+1. [Signup](signup.png) leads to an [empty journal](empty-report.png).
+2. [Four saved readings](four-readings.png) show 110, 138, 129, and 124 mg/dl. The report shows count **4**, highest **138**, lowest **110**, and average **125.3**.
+3. [Editing lunch](edit-form.png) changes 129 to 142 mg/dl. The [saved result](edited-reading.png) shows highest **142** and average **128.5**.
+4. [Confirming dinner deletion](delete-confirmation.png) produces a [three-reading journal](deleted-reading.png), an available dinner slot, and average **130.0**.
+5. The seeded account shows [daily readings](daily-desktop.png), [month-to-date totals](month-to-date.png), and the [entire previous month](previous-month.png), with a chart of the recorded values.
+
+The validation section captures each of the assignment's five rules. The integration tests check password hashing, patient isolation, report calculations, cache invalidation, and doctor permissions; the screenshots show the visible UI states.
+
 ## Accounts and journal
 
 | View | Screenshot |

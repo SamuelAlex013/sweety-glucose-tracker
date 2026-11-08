@@ -110,23 +110,22 @@ Run `npm run worker` in another terminal for local reminder jobs. The server and
 
 ## Tests
 
+With the Docker app running and the demo accounts seeded:
+
 ```sh
+npm ci
 npm test
 docker compose exec db createdb -U sweety sweety_test
 npm run test:integration
 npx playwright install chromium
-npm run test:e2e
+E2E_BASE_URL=http://localhost:3001 npm run test:e2e
 ```
 
 Set `TEST_DATABASE_URL` and `TEST_REDIS_URL` in `.env`. Integration tests create and drop an isolated PostgreSQL schema and use unique Redis namespaces. Browser tests register synthetic patient accounts in the configured app database.
 
-For browser tests against the Docker app:
-
-```sh
-E2E_BASE_URL=http://localhost:3001 npm run test:e2e
-```
-
 PowerShell: `$env:E2E_BASE_URL='http://localhost:3001'; npm run test:e2e`.
+
+Use the app's configured host port in `E2E_BASE_URL`. Create `sweety_test` once; subsequent runs reuse the database with a fresh test schema. For local Node development, stop the Compose app and worker as shown above, leave `E2E_BASE_URL` unset, and run `npm run test:e2e`. Playwright starts the development servers when needed.
 
 The 26 tests cover validation, private CRUD, session handling, report boundaries, pagination, doctor assignments, cache invalidation, Redis-backed reminder jobs, and browser flows. The database-disconnection regression test checks process survival and reconnection.
 

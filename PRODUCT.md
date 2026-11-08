@@ -8,7 +8,7 @@ web
 
 ## Stack
 
-Required by the brief: React, Node.js, Express, PostgreSQL. PostgreSQL replaces MongoDB despite the MERN shorthand.
+React, Node.js, Express, and PostgreSQL, as specified in the assignment. Redis and BullMQ support caching and reminder jobs.
 
 ## Users and purpose
 
@@ -20,8 +20,8 @@ Email/password registration; bcrypt password hashing; private reading CRUD; four
 
 ## Brand commitments
 
-Sweety. The brief asks for design informed by Lovable or another good frontend reference, readable modular code, and meaningful tests.
+Sweety uses a daily journal layout with four meal slots, clear period controls, and a shared neutral palette. Lovable's Customer Health Dashboard informed the initial layout.
 
 ## Assumptions
 
-The brief explicitly delegates unresolved details to documented assumptions. Calendar dates follow one configured server timezone; reports describe recorded values without diagnosis or clinical target judgments. Demo readings are synthetic.
+Calendar dates follow one configured server timezone. Reports show recorded values and arithmetic summaries. Demo readings are synthetic.
